@@ -8,6 +8,11 @@ This manifest names every file, workflow job, document, and glossary term that l
 
 Source of record: the predecessor repository `workpulse` at `~/workspace/github/workpulse`, module `github.com/LGU-CTO/workpulse`, `BINARY_VERSION` 0.8.3.
 
+**Re-verified against `BINARY_VERSION` 0.9.0 and still exact.**
+0.9.0 changed 17 files, but none of them is in this manifest: the six packages, `tools/releasemanifest`, the six `cmd` files, `.github/`, `hooks/`, `.goreleaser.yaml` and `CONTEXT.md` are all byte-identical to 0.8.3.
+Every line count, file list and workflow-job count below therefore holds unchanged.
+The one thing 0.9.0 adds is another `docs/releases/` entry, which this manifest already rules out of the port.
+
 ## Method
 
 The package graph came from `go list -f '{{.ImportPath}}|{{join .Imports ","}}' ./...`, which reports what the compiler actually resolves rather than what a grep of import blocks suggests.
@@ -222,7 +227,7 @@ Ordered so the tree compiles at each step and nothing is deleted while still ref
 
 ## Primary sources
 
-All paths relative to `~/workspace/github/workpulse` at `BINARY_VERSION` 0.8.3.
+All paths relative to `~/workspace/github/workpulse` at `BINARY_VERSION` 0.8.3, re-verified unchanged at 0.9.0.
 
 - `go list -deps=false -f '{{.ImportPath}}|{{join .Imports ","}}' ./...` — the package graph.
 - `cmd/root.go`, `cmd/version.go`, `cmd/upgrade.go`, `cmd/update_check_lifecycle.go`.

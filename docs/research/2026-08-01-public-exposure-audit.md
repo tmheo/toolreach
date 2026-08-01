@@ -2,8 +2,20 @@
 
 Resolves [Public-exposure audit of the predecessor source](https://github.com/tmheo/toolreach/issues/5), a ticket on [Map: port workpulse to a publicly distributable toolreach v0.1](https://github.com/tmheo/toolreach/issues/1).
 
-Audited tree: the predecessor checkout at `~/workspace/github/workpulse`, 353 tracked files.
+Audited tree: the predecessor checkout at `~/workspace/github/workpulse`, `BINARY_VERSION` 0.8.3, 353 tracked files.
 Build output (`dist/`, `bin/`, the root binary) and local agent tooling (`.claude/`, `.codex/`) are gitignored and untracked, so nothing there can travel.
+
+## Re-verification at 0.9.0
+
+The predecessor moved to `BINARY_VERSION` 0.9.0 after this audit was written, adding `jira search --fields`, correcting a `--limit` help text, and updating both skill copies to match.
+The tree is now 354 tracked files.
+
+Findings A through L and N survive the change unaltered, and two of the quantities were recounted rather than assumed: the `@MX:*` split is still exactly 27 `SPEC`/`ANCHOR` and 30 `NOTE`/`REASON`/`WARN` lines, and the module path is still imported by exactly 114 Go files.
+`internal/oauth/` was untouched, so nothing here bears on the scope inventory either.
+
+**Finding M is the exception and has been corrected below.**
+0.9.0 put a real Jira project key into a test file, which is the first time a live work identifier has appeared anywhere outside `docs/releases/`.
+The lesson generalizes past this one release: an audit of a moving predecessor describes a moment, and the port should re-run the identifier greps against whatever commit it actually copies rather than trusting a snapshot.
 
 ## Redaction key
 
@@ -18,6 +30,7 @@ Placeholders below resolve against the predecessor checkout:
 | `<CORP-EMAIL>` | maintainer's corporate address | `grep -h email .claude-plugin/plugin.json` |
 | `<TENANT-A>`, `<TENANT-B>` | the two real Atlassian site hostnames | see finding B |
 | `<JIRA-KEY>` | Jira project key used in release smoke tests | see finding C |
+| `<JIRA-KEY-2>` | a second, real Jira project key, this one a live delivery project rather than a smoke-test one | `grep -rn 'project = ' internal/jira/client_test.go` |
 
 Whoever does the port has the private checkout and can expand these in seconds.
 This is a judgement call about the audit artifact, not about the port: if you would rather the doc name things outright, say so and it can be rewritten.
@@ -28,7 +41,7 @@ This is a judgement call about the audit artifact, not about the port: if you wo
 |---|---|---|
 | A | Repo slug `<ORG>/workpulse` outside import paths, 17 sites | must-remove |
 | B | Two real Atlassian tenant hostnames, 4 occurrences | must-remove |
-| C | Real Jira and Confluence work identifiers in release evidence | must-remove |
+| C | Real Jira and Confluence work identifiers in release evidence, and in `internal/jira/client_test.go` as of 0.9.0 | must-remove |
 | D | `docs/releases/` and `docs/release-integrity.md` | must-remove (do not port) |
 | E | `<CORP-EMAIL>` in three plugin manifests | must-remove |
 | F | Homebrew private-download-strategy and its README section | must-remove |
@@ -75,6 +88,15 @@ The release-evidence documents record live operations against the internal tenan
 `docs/releases/2026-06-28-post-release-smoke.md` alone contains a real Jira project key `<JIRA-KEY>`, a created issue key in that project, a Jira comment id, two Confluence page ids (a created child and its homepage parent), a phrase describing an internally approved personal space, GitHub Actions run ids, and internal issue numbers.
 The other release documents follow the same template.
 None of this is dangerous on its own, but together it maps a slice of the organization's Confluence and Jira layout.
+
+**As of 0.9.0 this finding is no longer confined to release evidence.**
+`internal/jira/client_test.go` hard-codes `<JIRA-KEY-2>`, a real delivery project, in three places: an issue key in a fixture payload, a second issue key that the fixture's `issuelinks` points at, and a `project = <JIRA-KEY-2>` JQL string in the call under test.
+`docs/releases/2026-08-01-jira-search-field-selection-release.md` names the same project in prose, and adds a GitHub Actions run id, a release URL, and a Homebrew tap commit, but that document is covered by finding D and never ports.
+
+The distinction that matters is where the identifier sits.
+Finding D neutralizes everything in `docs/releases/` by not porting it.
+The test suite has no such protection: it comes across, which is what [The rename surface in the test suite and testdata](https://github.com/tmheo/toolreach/issues/14) is scoped to measure.
+So this is the first work identifier that would reach a public repository unless someone deletes it, and the fix is to rewrite the three sites to a synthetic key in the same style the rest of the fixtures already use.
 
 ### D. `docs/releases/` and `docs/release-integrity.md`
 
@@ -202,6 +224,12 @@ The same applies to the `WORKPULSE_` environment-variable prefix, the `~/.workpu
 `internal/jira/testdata/issue-sample.json` and the ADF fixtures use obviously synthetic identities: display names paired with `@example.com` addresses and `accountId` values like `user-001`.
 No real Atlassian account ids anywhere in the tree.
 `testdata/` at the repo root holds 2 files and contains no organization tokens.
+
+**Correction, 0.9.0.**
+As originally written this finding said the fixtures were synthetic without qualification, and at 0.8.3 that was true: `<JIRA-KEY-2>` appeared in no Go file in the tree.
+0.9.0's inline fixture in `internal/jira/client_test.go` breaks it, and the detail is under finding C.
+Account ids, display names and email addresses remain synthetic throughout, so the correction is confined to project and issue keys.
+Whoever ports the test suite should re-run the check rather than read this paragraph, because it describes 0.9.0 and the predecessor keeps moving.
 
 ### N. Generic hostname placeholders
 
