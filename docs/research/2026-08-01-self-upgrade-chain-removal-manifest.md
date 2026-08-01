@@ -126,7 +126,7 @@ Two leave with the chain: `ci.yml`'s `release-contract` job and `release.yml`'s 
 Two survive and are the reason the file cannot simply be deleted:
 
 - `docs/releases/2026-06-28-post-v0.4.5-release-train.md` names it in a release checklist.
-- **`hooks/session-start.sh`** reads it as the pinned version the Claude Code plugin installs. This is the finding least visible from the map. The plugin hook is a *second, independent* self-updating path: on session start it compares `workpulse version` output against `BINARY_VERSION` and, if they differ, downloads `workpulse_${VERSION}_${OS}_${ARCH}.tar.gz` from the GitHub release via `gh release download` or an authenticated `curl`, extracts it, and moves it over the installed binary. It shares none of the chain's code, none of its verification, and none of its Homebrew-ownership guard, and it will keep working after every file in this manifest is deleted. Whether toolreach ships a plugin hook that silently replaces the user's binary with no signature check is a decision the map does not yet hold. See "What this surfaces" below.
+- **`hooks/session-start.sh`** reads it as the pinned version the Claude Code plugin installs. This is the finding least visible from the map. The plugin hook is a *second, independent* self-updating path: on session start it compares `workpulse version` output against `BINARY_VERSION` and, if they differ, downloads `workpulse_${VERSION}_${OS}_${ARCH}.tar.gz` from the GitHub release via `gh release download` or an authenticated `curl`, extracts it, and moves it over the installed binary. It shares none of the chain's code, none of its verification, and none of its Homebrew-ownership guard, and it will keep working after every file in this manifest is deleted. `hooks/hooks.json` is what registers it, on `SessionStart` with a 60-second timeout, described there as "workpulse binary auto-update on session start". That decision has since landed: the hook is not ported. See "What this surfaces" below.
 
 **`docs/release-integrity.md`** (174 lines) leaves entirely.
 It documents only the manifest contract, the pinned workflow signing identity, the transparency-log disclosure accepted for a private repository, and the independent `cosign verify-blob` command.
@@ -185,9 +185,12 @@ Delete the chain and that sentence describes a mechanism that no longer exists, 
 Those skill instructions survive the removal unharmed; only the automated delivery of the notice goes.
 A public tool distributing through Homebrew and `go install` needs some answer here, most likely release notes, and the map's Onboarding decision already commits to a scope-shortfall failure that names the missing permission, which covers much of the same ground.
 
-**The plugin's own self-update path is untouched by this removal.**
+**The plugin's own self-update path is untouched by this removal, and has since been ruled out separately.**
 `hooks/session-start.sh` is described above.
 It is out of this manifest's scope because it is not part of the chain, but toolreach cannot ship it unexamined: it currently pulls from `LGU-CTO/workpulse`, assumes a private repository needing `gh` or a `GITHUB_TOKEN`, and replaces the user's binary with no verification at all.
+On a Homebrew install it replaces brew's symlink with a regular file, so brew's recorded version and the file on disk disagree and a later `brew upgrade` silently reverts the user.
+Decided after this manifest was first written: the hook and its `hooks/hooks.json` registration are deleted rather than ported.
+What, if anything, replaces it is the remaining question on [Whether the plugin warns when the toolreach CLI is older than it expects](https://github.com/tmheo/toolreach/issues/10).
 
 **Three private-release environment variables must not survive.**
 `WORKPULSE_GITHUB_TOKEN`, `GH_TOKEN`, and `GITHUB_TOKEN` are read by `binaryrelease.ResolveCredential` / `ResolveEnvCredential`, documented in README, and defined in `CONTEXT.md`.
@@ -215,7 +218,7 @@ Ordered so the tree compiles at each step and nothing is deleted while still ref
 11. `README.md` — delete lines 675 to 799 (`## Binary Upgrade` through `### macOS Quarantine`) and amend the Features bullet at line 19, which ends "and private-release upgrade support".
 12. `CONTEXT.md` — delete lines 283 to 388.
 13. `docs/release-integrity.md` — delete. `docs/releases/` — do not port.
-14. `BINARY_VERSION` and `hooks/session-start.sh` — hold pending the plugin-distribution decision; the file has no remaining Go or CI reader once step 9 lands.
+14. `hooks/session-start.sh` and its `SessionStart` entry in `hooks/hooks.json` — delete. `BINARY_VERSION` then has no reader at all once step 9 lands, since its only other mention is in `docs/releases/`, which is not ported. It goes too unless a replacement version check claims it, which is [Whether the plugin warns when the toolreach CLI is older than it expects](https://github.com/tmheo/toolreach/issues/10)'s remaining question.
 
 ## Primary sources
 
