@@ -8,7 +8,7 @@ Counted against predecessor `BINARY_VERSION` **0.9.0**, commit `d27c583`, 2026-0
 Every count below should be re-run against the commit the port actually copies.
 
 The headline: the domain language survives the port almost intact.
-Of 70 terms, 18 leave with the removal manifest, 50 need no edit at all, 2 need a sentence changed, and 1 new term is added.
+Of 70 terms, 18 leave with the removal manifest, 50 need no edit at all, 2 need a sentence changed, and 1 new term is added - 2 once [section 8](#8-issue-11s-edits-adr-0007-and-one-added-term) is counted.
 The two edited terms are **Grant** and **Atlassian Access Session**, which is exactly where the ticket expected the strain.
 
 ---
@@ -255,6 +255,8 @@ The Upgrade Action is a field of the Binary Release Manifest, which leaves with 
 This ticket does not rewrite it.
 [How a scope-adding release tells existing users to re-authorize](https://github.com/tmheo/toolreach/issues/11) is exactly the question of what replaces the Upgrade Action, and its resolution should carry this edit.
 
+**Resolved.** Issue 11 closed and its edits are appended below as [section 8](#8-issue-11s-edits-adr-0007-and-one-added-term).
+
 Two further sentences in 0007's Consequences need re-verifying rather than rewriting:
 
 > Only five Grants have recovery guidance naming them ... The other eight reach the user as the generic re-authentication guidance.
@@ -323,6 +325,62 @@ The chain never had an ADR, and [issue 4](https://github.com/tmheo/toolreach/iss
 
 ---
 
+## 8. Issue 11's edits: ADR 0007, and one added term
+
+Appended after this document's original resolution, by [How a scope-adding release tells existing users to re-authorize](https://github.com/tmheo/toolreach/issues/11), which section 6 deferred this edit to.
+Read that issue's resolution comment for the reasoning; only the resulting edits are recorded here.
+
+### ADR 0007, line 45
+
+Replace:
+
+> The cost lands on first use after a release that adds scopes: the run fails on the request that needed the new grant rather than before it, and the release's Upgrade Action carries the instruction instead.
+
+with:
+
+> The cost lands on first use after a release that adds scopes: the run fails on the request that needed the new grant rather than before it.
+> Under a per-organization shared app the instruction cannot be carried to the person who must act, because adding a scope to the Atlassian App Registration is the registrant's action and not the user's.
+> The release notes carry it to the registrant, and `toolreach auth setup` prints the current scope list on demand so a registration can be corrected without reconstructing it from release history.
+
+### ADR 0007, Consequences, appended
+
+> toolreach records the scope list it requested at the moment of each consent, alongside the selected site and published with the same write.
+> That record is evidence of what was asked for, never of what was granted, and it exists so a failure can say whether a consent predates the current release rather than sending every reader to re-authenticate.
+> It must not gate: no command may refuse, warn in advance, or degrade behaviour because the record is stale.
+> `toolreach auth status` may report the staleness, which is a statement about toolreach's own request history and not a capability claim.
+
+### ADR 0007, Deletion Test, appended
+
+The Consent Scope Record is precisely the "new evidence source" the Deletion Test anticipates, so the rule against building on it has to be stated rather than inferred:
+
+> The Consent Scope Record is a new evidence source and is therefore the obvious material for rebuilding the gate.
+> It is admissible only because it says nothing about the token; a check that combines it with anything Atlassian reports is the removed responsibility returning.
+
+### CONTEXT.md, one added term
+
+Insert alongside **Atlassian App Registration**:
+
+> **Consent Scope Record**:
+> The list of scopes toolreach requested at the moment the current user last consented, recorded locally beside the selected site and replaced by the same write that replaces the token.
+> It is evidence of what was asked for, never of what was granted, so it can show that a consent predates the current release and can never show that a Grant is present.
+> _Avoid_: granted scopes, the token's scopes, Grant, capability
+
+This raises the term count from **53 to 54**: 52 carried from the predecessor, 2 new.
+
+### Guidance text that changes meaning, outside CONTEXT.md and the ADRs
+
+Not part of this document's original scope, recorded here because it is the same edit landing in three more places.
+Every passage below ends at "re-run `auth login`", which is insufficient once the registration is a third party to the user.
+
+- `internal/oauth/resources.go` - six message constants and builders.
+- `internal/confluence/types.go:262` - the generic `AuthError.Error()` text.
+- `internal/confluence/types.go:274` - a comment justifying 0007's one-directional degradation with "sends nobody anywhere wrong", which stops being true. The mechanism is unchanged; only the justification is rewritten.
+- 7 capability-failure passages across 4 skill documents (`skills/workpulse/SKILL.md`, `skills/workpulse/references/cli-reference.md`, `skills/workpulse/references/workflow-patterns.md`, `skills/llm-wiki/SKILL.md`).
+
+The language these land in is [What language toolreach speaks to its users](https://github.com/tmheo/toolreach/issues/12)'s decision; the content change holds either way.
+
+---
+
 ## Summary of edits
 
 **CONTEXT.md**
@@ -330,14 +388,14 @@ The chain never had an ADR, and [issue 4](https://github.com/tmheo/toolreach/iss
 1. Line 1: heading to `# toolreach`.
 2. Line 3: rewrite to name the Jira surfaces.
 3. Line 70: replace the app-permissions sentence, naming the two indistinguishable causes.
-4. After **Grant**: insert **Atlassian App Registration**.
+4. After **Grant**: insert **Atlassian App Registration**, and **Consent Scope Record** ([section 8](#8-issue-11s-edits-adr-0007-and-one-added-term)).
 5. Line 110: append the cross-organization clause.
 6. Line 166: drop `Binary Upgrade Lock` from the `_Avoid_` list.
 7. Line 208 and line 212: name the Marketplace apps rather than assume them.
 8. Lines 283 to 388: delete, 18 terms.
 9. 30 remaining prose occurrences of the predecessor name to `toolreach`.
 
-Result: 53 terms, of which 52 come from the predecessor and 1 is new.
+Result: 54 terms, of which 52 come from the predecessor and 2 are new.
 
 **docs/adr/**
 
@@ -345,5 +403,5 @@ Result: 53 terms, of which 52 come from the predecessor and 1 is new.
 2. 0001 and 0003: replace the "existing users must run auth login again" sentence.
 3. 0002: Marketplace wording for draw.io.
 4. 0005: no edit.
-5. 0007 line 45: deferred to issue 11.
+5. 0007: line 45 rewritten, plus one paragraph appended to Consequences and one to the Deletion Test ([section 8](#8-issue-11s-edits-adr-0007-and-one-added-term)).
 6. New `0008-toolreach-uses-a-per-organization-shared-atlassian-app.md`.
